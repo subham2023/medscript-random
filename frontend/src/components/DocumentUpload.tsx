@@ -1,83 +1,72 @@
 import React, { useState, useCallback } from 'react';
-import { uploadDocument, AnalysisResult } from '../services/api';
+import { useMedicalAnalysis } from '../hooks/useMedicalAnalysis';
+import AnalysisDashboard from './AnalysisDashboard';
 
 const DocumentUpload: React.FC = () => {
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
-  const [error, setError] = useState<string | null>(null);
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
+    const { analysisResult, error, isLoading, statusMessage, uploadAndAnalyze } = useMedicalAnalysis();
 
-  const handleFileChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files && event.target.files[0]) {
-      setSelectedFile(event.target.files[0]);
-      setAnalysisResult(null);
-      setError(null);
-    }
-  }, []);
+    const handleFileChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+        if (event.target.files && event.target.files[0]) {
+            setSelectedFile(event.target.files[0]);
+        }
+    }, []);
 
-  const handleFileUpload = useCallback(async () => {
-    if (!selectedFile) {
-      setError('Please select a file first.');
-      return;
-    }
+    const handleFileUpload = useCallback(async () => {
+        if (selectedFile) {
+            uploadAndAnalyze(selectedFile);
+        }
+    }, [selectedFile, uploadAndAnalyze]);
 
-    setIsLoading(true);
-    setError(null);
-    try {
-      const result = await uploadDocument(selectedFile);
-      setAnalysisResult(result);
-    } catch (err: any) {
-      setError(err.response?.data?.detail || 'An error occurred during upload.');
-      console.error('Upload error:', err);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [selectedFile]);
+    return (
+        <div style={{ padding: '20px', maxWidth: '800px', margin: 'auto' }}>
+            <h1>Upload Medical Document for Analysis</h1>
+            <p>Upload a PDF, JPG, PNG, or TXT file to get a clear, understandable summary of your medical information.</p>
 
-  return (
-    <div style={{ padding: '20px', maxWidth: '600px', margin: 'auto' }}>
-      <h1>Upload Medical Document</h1>
-      <input type="file" onChange={handleFileChange} disabled={isLoading} />
-      <button onClick={handleFileUpload} disabled={!selectedFile || isLoading}>
-        {isLoading ? 'Uploading...' : 'Upload and Analyze'}
-      </button>
+            <div style={{ margin: '20px 0', border: '2px dashed #ccc', padding: '20px', borderRadius: '8px' }}>
+                <input
+                    type="file"
+                    accept=".pdf,.jpg,.jpeg,.png,.txt"
+                    onChange={handleFileChange}
+                    disabled={isLoading}
+                    style={{ display: 'block', marginBottom: '10px' }}
+                />
+                <button onClick={handleFileUpload} disabled={!selectedFile || isLoading}>
+                    {isLoading ? 'Processing...' : 'Upload and Analyze'}
+                </button>
+            </div>
 
-      {error && <p style={{ color: 'red' }}>Error: {error}</p>}
+            {isLoading && (
+                <div style={{ marginTop: '20px' }}>
+                    <h3>Analysis in Progress...</h3>
+                    <p>{statusMessage}</p>
+                    {/* A simple spinner */}
+                    <div className="spinner"></div>
+                    <style>{`
+                        .spinner {
+                            border: 4px solid rgba(0, 0, 0, 0.1);
+                            width: 36px;
+                            height: 36px;
+                            border-radius: 50%;
+                            border-left-color: #09f;
+                            animation: spin 1s ease infinite;
+                            margin: 20px auto;
+                        }
+                        @keyframes spin {
+                            0% { transform: rotate(0deg); }
+                            100% { transform: rotate(360deg); }
+                        }
+                    `}</style>
+                </div>
+            )}
 
-      {analysisResult && (
-        <div style={{ marginTop: '20px', border: '1px solid #ccc', padding: '15px' }}>
-          <h2>Analysis Result</h2>
-          <p><strong>Document ID:</strong> {analysisResult.document_id}</p>
-          <p><strong>Document Type:</strong> {analysisResult.document_type}</p>
-          <p><strong>Status:</strong> {analysisResult.processing_status}</p>
-          <p><strong>Summary:</strong> {analysisResult.summary}</p>
-          <h3>Key Findings:</h3>
-          <ul>
-            {analysisResult.key_findings.map((finding, index) => (
-              <li key={index}>{finding}</li>
-            ))}
-          </ul>
-          <h3>Extracted Entities:</h3>
-          <ul>
-            {analysisResult.extracted_entities.map((entity, index) => (
-              <li key={index}>
-                <strong>{entity.entity_type}:</strong> {entity.entity_value} (Confidence: {entity.confidence_score.toFixed(2)})
-              </li>
-            ))}
-          </ul>
-          <h3>Safety Assessment:</h3>
-          <ul>
-            {analysisResult.safety_assessment.map((alert, index) => (
-              <li key={index} style={{ color: alert.severity === 'critical' ? 'red' : alert.severity === 'major' ? 'orange' : 'inherit' }}>
-                <strong>{alert.title} ({alert.severity}):</strong> {alert.description}
-                {alert.action_required && <em> (Action Required)</em>}
-              </li>
-            ))}
-          </ul>
+            {error && <p style={{ color: 'red', marginTop: '20px' }}>Error: {error}</p>}
+
+            {analysisResult && !isLoading && (
+                <AnalysisDashboard result={analysisResult} />
+            )}
         </div>
-      )}
-    </div>
-  );
+    );
 };
 
 export default DocumentUpload;
