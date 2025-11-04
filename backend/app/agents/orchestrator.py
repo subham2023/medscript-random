@@ -1,7 +1,12 @@
-from langchain_google_genai import ChatGoogleGenerativeAI
 from typing import Any, Dict
 
-from app.agents.specialist_agents import DocumentTypeDetectionAgent, MedicalEntityExtractionAgent, KnowledgeRetrievalAgent, ReasoningAgent, SafetyAssessmentAgent
+from app.agents.specialist_agents import (DocumentTypeDetectionAgent,
+                                          KnowledgeRetrievalAgent,
+                                          MedicalEntityExtractionAgent,
+                                          ReasoningAgent,
+                                          SafetyAssessmentAgent)
+from langchain_google_genai import ChatGoogleGenerativeAI
+
 
 class OrchestratorAgent:
     def __init__(self):
@@ -21,16 +26,24 @@ class OrchestratorAgent:
         print(f"Orchestrator received text: {extracted_text[:100]}...")
 
         # Step 1: Detect Document Type
-        document_type_result = await self.document_type_agent.detect_document_type(extracted_text)
-        detected_document_type = document_type_result['document_type']
-        print(f"Detected document type: {detected_document_type} with confidence {document_type_result['confidence_score']}")
+        document_type_result = await self.document_type_agent.detect_document_type(
+            extracted_text
+        )
+        detected_document_type = document_type_result["document_type"]
+        print(
+            f"Detected document type: {detected_document_type} with confidence {document_type_result['confidence_score']}"
+        )
 
         # Step 2: Extract Medical Entities
-        extracted_entities = await self.medical_entity_agent.extract_entities(extracted_text, detected_document_type)
+        extracted_entities = await self.medical_entity_agent.extract_entities(
+            extracted_text, detected_document_type
+        )
         print(f"Extracted {len(extracted_entities)} medical entities.")
 
         # Step 3: Retrieve relevant knowledge (simulated vector search)
-        retrieved_knowledge = await self.knowledge_retrieval_agent.retrieve_knowledge(extracted_entities)
+        retrieved_knowledge = await self.knowledge_retrieval_agent.retrieve_knowledge(
+            extracted_entities
+        )
         print(f"Retrieved {len(retrieved_knowledge)} knowledge snippets.")
 
         # Step 4: Perform reasoning to generate summary and findings
@@ -38,14 +51,15 @@ class OrchestratorAgent:
             extracted_text,
             detected_document_type,
             extracted_entities,
-            retrieved_knowledge
+            retrieved_knowledge,
         )
         print(f"Generated summary: {reasoning_result['summary'][:100]}...")
 
         # Step 5: Perform safety assessment for risks and interactions
-        safety_assessment_results = await self.safety_assessment_agent.perform_safety_assessment(
-            extracted_entities,
-            retrieved_knowledge
+        safety_assessment_results = (
+            await self.safety_assessment_agent.perform_safety_assessment(
+                extracted_entities, retrieved_knowledge
+            )
         )
         print(f"Generated {len(safety_assessment_results)} safety alerts.")
 
@@ -59,5 +73,5 @@ class OrchestratorAgent:
             "summary": reasoning_result["summary"],
             "key_findings": reasoning_result["key_findings"],
             "safety_assessment": safety_assessment_results,
-            "message": "Document analysis, entity extraction, knowledge retrieval, reasoning, and safety assessment complete."
+            "message": "Document analysis, entity extraction, knowledge retrieval, reasoning, and safety assessment complete.",
         }

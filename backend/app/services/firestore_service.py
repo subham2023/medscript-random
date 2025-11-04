@@ -1,11 +1,13 @@
-from typing import Dict, Any, Optional
 import datetime
+from typing import Any, Dict, Optional
 
 # Firestore async client may not be available or credentials may be missing in CI.
 # Provide a safe import with fallback to an in-memory store for tests.
 try:
-    from google.cloud import firestore as firestore_sync  # for SERVER_TIMESTAMP
+    from google.cloud import \
+        firestore as firestore_sync  # for SERVER_TIMESTAMP
     from google.cloud import firestore_async as firestore
+
     db = firestore.AsyncClient()
     SERVER_TIMESTAMP = firestore_sync.SERVER_TIMESTAMP
 except Exception:

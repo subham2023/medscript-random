@@ -1,8 +1,7 @@
-from fastapi.testclient import TestClient
-from app.main import app
 from app.core.config import settings
+from app.main import app
 from app.services import firestore_service
-
+from fastapi.testclient import TestClient
 
 client = TestClient(app)
 
@@ -20,11 +19,16 @@ def test_analysis_status_processing():
     # Seed record as processing
     client.app
     import anyio
-    anyio.run(firestore_service.create_analysis_record, doc_id, {
-        "document_id": doc_id,
-        "processing_status": "processing",
-        "message": "In progress",
-    })
+
+    anyio.run(
+        firestore_service.create_analysis_record,
+        doc_id,
+        {
+            "document_id": doc_id,
+            "processing_status": "processing",
+            "message": "In progress",
+        },
+    )
 
     url = f"{settings.API_V1_STR}/analysis/{doc_id}/status"
     resp = client.get(url)
@@ -38,11 +42,16 @@ def test_analysis_result_not_ready():
     doc_id = "doc-not-ready"
     firestore_service._IN_MEMORY_STORE.clear()
     import anyio
-    anyio.run(firestore_service.create_analysis_record, doc_id, {
-        "document_id": doc_id,
-        "processing_status": "processing",
-        "message": "In progress",
-    })
+
+    anyio.run(
+        firestore_service.create_analysis_record,
+        doc_id,
+        {
+            "document_id": doc_id,
+            "processing_status": "processing",
+            "message": "In progress",
+        },
+    )
 
     url = f"{settings.API_V1_STR}/analysis/{doc_id}"
     resp = client.get(url)
@@ -64,6 +73,7 @@ def test_analysis_result_complete():
     }
 
     import anyio
+
     anyio.run(firestore_service.create_analysis_record, doc_id, complete_record)
 
     url = f"{settings.API_V1_STR}/analysis/{doc_id}"
@@ -73,5 +83,3 @@ def test_analysis_result_complete():
     assert data["document_id"] == doc_id
     assert data["processing_status"] == "complete"
     assert data["summary"] == "All good"
-
-

@@ -1,5 +1,7 @@
-from pydantic import BaseModel
 from typing import List, Optional
+
+from pydantic import BaseModel
+
 
 class UploadResponse(BaseModel):
     document_id: str
@@ -8,8 +10,10 @@ class UploadResponse(BaseModel):
     status: str
     message: str
 
+
 class AnalysisRequest(BaseModel):
     document_id: str
+
 
 class MedicalEntity(BaseModel):
     entity_type: str
@@ -17,11 +21,13 @@ class MedicalEntity(BaseModel):
     confidence_score: float
     metadata: Optional[dict] = None
 
+
 class SafetyAlert(BaseModel):
     severity: str
     title: str
     description: str
     action_required: bool
+
 
 class AnalysisResult(BaseModel):
     document_id: str
@@ -31,6 +37,7 @@ class AnalysisResult(BaseModel):
     extracted_entities: List[MedicalEntity]
     safety_assessment: List[SafetyAlert]
     processing_status: str
+
 
 class AnalysisStatus(BaseModel):
     document_id: str

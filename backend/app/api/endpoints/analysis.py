@@ -1,8 +1,9 @@
-from fastapi import APIRouter, HTTPException
 from app.api import models
 from app.services import firestore_service
+from fastapi import APIRouter, HTTPException
 
 router = APIRouter()
+
 
 @router.get("/analysis/{document_id}/status", response_model=models.AnalysisStatus)
 async def get_analysis_status(document_id: str):
@@ -16,8 +17,9 @@ async def get_analysis_status(document_id: str):
     return models.AnalysisStatus(
         document_id=result.get("document_id"),
         status=result.get("processing_status", "unknown"),
-        message=result.get("message")
+        message=result.get("message"),
     )
+
 
 @router.get("/analysis/{document_id}", response_model=models.AnalysisResult)
 async def get_analysis_result(document_id: str):
@@ -29,7 +31,10 @@ async def get_analysis_result(document_id: str):
         raise HTTPException(status_code=404, detail="Document not found.")
 
     if result.get("processing_status") != "complete":
-        raise HTTPException(status_code=404, detail="Analysis not yet complete. Please check status endpoint.")
+        raise HTTPException(
+            status_code=404,
+            detail="Analysis not yet complete. Please check status endpoint.",
+        )
 
     # Pydantic will validate the structure against the AnalysisResult model
     return result

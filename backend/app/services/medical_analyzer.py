@@ -1,6 +1,8 @@
+import datetime
+
 from app.agents.orchestrator import OrchestratorAgent
 from app.services import firestore_service
-import datetime
+
 
 async def analyze_document_in_background(document_id: str, extracted_text: str):
     """
@@ -11,7 +13,7 @@ async def analyze_document_in_background(document_id: str, extracted_text: str):
         # 1. Update status to 'analyzing'
         await firestore_service.update_analysis_record(
             document_id,
-            {"processing_status": "analyzing", "message": "AI analysis in progress."}
+            {"processing_status": "analyzing", "message": "AI analysis in progress."},
         )
 
         # 2. Initialize and run the orchestrator agent
@@ -36,7 +38,9 @@ async def analyze_document_in_background(document_id: str, extracted_text: str):
         print(f"Successfully completed analysis for document_id: {document_id}")
 
     except Exception as e:
-        print(f"Error during background analysis for document_id: {document_id}. Error: {e}")
+        print(
+            f"Error during background analysis for document_id: {document_id}. Error: {e}"
+        )
         # Update Firestore with an error status
         await firestore_service.update_analysis_record(
             document_id,
@@ -44,5 +48,5 @@ async def analyze_document_in_background(document_id: str, extracted_text: str):
                 "processing_status": "failed",
                 "message": f"An unexpected error occurred: {str(e)}",
                 "completed_at": firestore_service.SERVER_TIMESTAMP,
-            }
+            },
         )
