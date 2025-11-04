@@ -3,8 +3,7 @@ import uuid
 from typing import Annotated
 
 from app.api import models
-from app.services import (document_processor, firestore_service,
-                          medical_analyzer)
+from app.services import document_processor, firestore_service, medical_analyzer
 from fastapi import APIRouter, BackgroundTasks, File, HTTPException, UploadFile
 from google.cloud import firestore
 

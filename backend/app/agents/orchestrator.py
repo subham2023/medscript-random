@@ -1,10 +1,12 @@
 from typing import Any, Dict
 
-from app.agents.specialist_agents import (DocumentTypeDetectionAgent,
-                                          KnowledgeRetrievalAgent,
-                                          MedicalEntityExtractionAgent,
-                                          ReasoningAgent,
-                                          SafetyAssessmentAgent)
+from app.agents.specialist_agents import (
+    DocumentTypeDetectionAgent,
+    KnowledgeRetrievalAgent,
+    MedicalEntityExtractionAgent,
+    ReasoningAgent,
+    SafetyAssessmentAgent,
+)
 from langchain_google_genai import ChatGoogleGenerativeAI
 
 
