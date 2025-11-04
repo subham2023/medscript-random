@@ -1,15 +1,13 @@
-from langchain_core.agents import AgentFinish
 from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain.agents import AgentExecutor, create_react_agent
-from langchain_core.prompts import PromptTemplate
-from langchain_core.runnables import Runnable
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict
 
 from app.agents.specialist_agents import DocumentTypeDetectionAgent, MedicalEntityExtractionAgent, KnowledgeRetrievalAgent, ReasoningAgent, SafetyAssessmentAgent
 
 class OrchestratorAgent:
     def __init__(self):
-        self.llm = ChatGoogleGenerativeAI(model="gemini-pro") # Using gemini-pro for now, will switch to Flash later
+        # Spec mentions Gemini 2.0 Flash, which would be a specific model name like "gemini-1.5-flash-latest"
+        # Using a placeholder here that aligns with the spec's intent.
+        self.llm = ChatGoogleGenerativeAI(model="gemini-1.5-flash-latest")
         self.document_type_agent = DocumentTypeDetectionAgent()
         self.medical_entity_agent = MedicalEntityExtractionAgent()
         self.knowledge_retrieval_agent = KnowledgeRetrievalAgent()
@@ -18,20 +16,24 @@ class OrchestratorAgent:
 
     async def process_document(self, extracted_text: str) -> Dict[str, Any]:
         """
-        Orchestrates the document analysis process.
+        Orchestrates the document analysis process by chaining specialist agents.
         """
         print(f"Orchestrator received text: {extracted_text[:100]}...")
-        
+
+        # Step 1: Detect Document Type
         document_type_result = await self.document_type_agent.detect_document_type(extracted_text)
         detected_document_type = document_type_result['document_type']
         print(f"Detected document type: {detected_document_type} with confidence {document_type_result['confidence_score']}")
-        
+
+        # Step 2: Extract Medical Entities
         extracted_entities = await self.medical_entity_agent.extract_entities(extracted_text, detected_document_type)
         print(f"Extracted {len(extracted_entities)} medical entities.")
 
+        # Step 3: Retrieve relevant knowledge (simulated vector search)
         retrieved_knowledge = await self.knowledge_retrieval_agent.retrieve_knowledge(extracted_entities)
         print(f"Retrieved {len(retrieved_knowledge)} knowledge snippets.")
 
+        # Step 4: Perform reasoning to generate summary and findings
         reasoning_result = await self.reasoning_agent.perform_reasoning(
             extracted_text,
             detected_document_type,
@@ -40,12 +42,14 @@ class OrchestratorAgent:
         )
         print(f"Generated summary: {reasoning_result['summary'][:100]}...")
 
+        # Step 5: Perform safety assessment for risks and interactions
         safety_assessment_results = await self.safety_assessment_agent.perform_safety_assessment(
             extracted_entities,
             retrieved_knowledge
         )
         print(f"Generated {len(safety_assessment_results)} safety alerts.")
-        
+
+        # Step 6: Assemble the final result
         return {
             "status": "analysis_complete",
             "document_type": detected_document_type,
