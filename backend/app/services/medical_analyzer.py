@@ -28,7 +28,7 @@ async def analyze_document_in_background(document_id: str, extracted_text: str):
             "safety_assessment": orchestration_result.get("safety_assessment", []),
             "processing_status": "complete",
             "message": "Analysis successful.",
-            "completed_at": firestore.SERVER_TIMESTAMP,
+            "completed_at": firestore_service.SERVER_TIMESTAMP,
         }
 
         # 4. Update the record in Firestore with the complete analysis
@@ -43,6 +43,6 @@ async def analyze_document_in_background(document_id: str, extracted_text: str):
             {
                 "processing_status": "failed",
                 "message": f"An unexpected error occurred: {str(e)}",
-                "completed_at": firestore.SERVER_TIMESTAMP,
+                "completed_at": firestore_service.SERVER_TIMESTAMP,
             }
         )
