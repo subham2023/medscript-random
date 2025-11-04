@@ -1,6 +1,6 @@
 # MedScript AI - Frontend
 This directory contains the React/TypeScript frontend for the MedScript AI
-application.
+application..
 ## Local Development
 ### Prerequisites
 - Node.js (v18 or later)
