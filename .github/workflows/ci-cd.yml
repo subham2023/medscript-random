@@ -99,4 +99,4 @@ jobs:
           flags: "--allow-unauthenticated"
 
       - name: Show Output
-        run: echo "🚀 Deployed successfully: ${{ steps.deploy.outputs.url }}"
+        run: echo "🚀 Deployed successfully:${{ steps.deploy.outputs.url }}"
