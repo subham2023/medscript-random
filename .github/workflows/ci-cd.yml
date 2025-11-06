@@ -58,15 +58,38 @@ jobs:
 
       - name: Verify Secrets (Debug)
         run: |
-          echo "Checking secrets..."
-          if [ -z "${{ secrets.GCP_PROJECT_ID }}" ]; then echo "❌ GCP_PROJECT_ID is empty"; else echo "✅ GCP_PROJECT_ID is set"; fi
-          if [ -z "${{ secrets.GCP_PROJECT_NUMBER }}" ]; then echo "❌ GCP_PROJECT_NUMBER is empty"; else echo "✅ GCP_PROJECT_NUMBER is set"; fi
-          if [ -z "${{ secrets.WIF_POOL_ID }}" ]; then echo "❌ WIF_POOL_ID is empty"; else echo "✅ WIF_POOL_ID is set"; fi
-          if [ -z "${{ secrets.WIF_PROVIDER_ID }}" ]; then echo "❌ WIF_PROVIDER_ID is empty"; else echo "✅ WIF_PROVIDER_ID is set"; fi
-          if [ -z "${{ secrets.GCP_SERVICE_ACCOUNT }}" ]; then echo "❌ GCP_SERVICE_ACCOUNT is empty"; else echo "✅ GCP_SERVICE_ACCOUNT is set"; fi
+          echo "=== Checking Secrets ==="
+          if [ -z "${{ secrets.GCP_PROJECT_ID }}" ]; then 
+            echo "❌ GCP_PROJECT_ID is empty"; 
+          else 
+            echo "✅ GCP_PROJECT_ID is set: ${{ secrets.GCP_PROJECT_ID }}"; 
+          fi
+          if [ -z "${{ secrets.GCP_PROJECT_NUMBER }}" ]; then 
+            echo "❌ GCP_PROJECT_NUMBER is empty"; 
+          else 
+            echo "✅ GCP_PROJECT_NUMBER is set: ${{ secrets.GCP_PROJECT_NUMBER }}"; 
+          fi
+          if [ -z "${{ secrets.WIF_POOL_ID }}" ]; then 
+            echo "❌ WIF_POOL_ID is empty"; 
+          else 
+            echo "✅ WIF_POOL_ID is set: ${{ secrets.WIF_POOL_ID }}"; 
+          fi
+          if [ -z "${{ secrets.WIF_PROVIDER_ID }}" ]; then 
+            echo "❌ WIF_PROVIDER_ID is empty"; 
+          else 
+            echo "✅ WIF_PROVIDER_ID is set: ${{ secrets.WIF_PROVIDER_ID }}"; 
+          fi
+          if [ -z "${{ secrets.GCP_SERVICE_ACCOUNT }}" ]; then 
+            echo "❌ GCP_SERVICE_ACCOUNT is empty"; 
+          else 
+            echo "✅ GCP_SERVICE_ACCOUNT is set: ${{ secrets.GCP_SERVICE_ACCOUNT }}"; 
+          fi
           echo ""
-          echo "Workload Identity Provider will be:"
-          echo "projects/${{ secrets.GCP_PROJECT_NUMBER }}/locations/global/workloadIdentityPools/${{ secrets.WIF_POOL_ID }}/providers/${{ secrets.WIF_PROVIDER_ID }}"
+          echo "=== Workload Identity Provider Path ==="
+          WIF_PATH="projects/${{ secrets.GCP_PROJECT_NUMBER }}/locations/global/workloadIdentityPools/${{ secrets.WIF_POOL_ID }}/providers/${{ secrets.WIF_PROVIDER_ID }}"
+          echo "$WIF_PATH"
+          echo ""
+          echo "This path must EXACTLY match the resource in GCP."
 
       - name: Authenticate to Google Cloud
         id: auth
