@@ -84,9 +84,26 @@ jobs:
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
 
+      - name: Verify Dockerfile exists and is not empty
+        run: |
+          echo "=== Verifying Dockerfile ==="
+          if [ ! -f "backend/Dockerfile" ]; then
+            echo "ERROR: Dockerfile not found!"
+            exit 1
+          fi
+          if [ ! -s "backend/Dockerfile" ]; then
+            echo "ERROR: Dockerfile is empty!"
+            exit 1
+          fi
+          echo "Dockerfile found and has content:"
+          ls -lh backend/Dockerfile
+          echo "First 10 lines of Dockerfile:"
+          head -10 backend/Dockerfile
+
       - name: Build and push container image
         run: |
-          gcloud builds submit backend/ \
+          cd backend
+          gcloud builds submit . \
             --tag "us-central1-docker.pkg.dev/cloud-run-project-477318/medscript-ai-backend/medscript-ai-backend:${{ github.sha }}"
 
       - name: Deploy to Cloud Run
