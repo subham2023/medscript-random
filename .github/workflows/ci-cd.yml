@@ -113,7 +113,15 @@ jobs:
           service: medscript-ai-backend
           region: us-central1
           image: "us-central1-docker.pkg.dev/cloud-run-project-477318/medscript-ai-backend/medscript-ai-backend:${{ github.sha }}"
-          flags: "--allow-unauthenticated"
+          flags: |
+            --allow-unauthenticated
+            --memory=2Gi
+            --cpu=2
+            --timeout=300
+            --max-instances=10
+            --min-instances=0
+            --concurrency=80
+            --platform=managed
 
       - name: Show Output
         run: echo "🚀 Deployed successfully:${{ steps.deploy.outputs.url }}"
