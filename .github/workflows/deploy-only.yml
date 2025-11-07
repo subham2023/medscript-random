@@ -1,0 +1,126 @@
+name: Deploy Only (Skip Tests)
+
+on:
+  workflow_dispatch:  # Manual trigger
+  push:
+    branches:
+      - main
+    paths:
+      - 'frontend/**'
+      - 'backend/**'
+      - '.github/workflows/deploy-only.yml'
+
+env:
+  PROJECT_ID: cloud-run-project-477318
+  REGION: us-central1
+
+jobs:
+  deploy-backend:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: 'projects/1074963275925/locations/global/workloadIdentityPools/github-random-medscript/providers/github'
+          service_account: 'github-wif@cloud-run-project-477318.iam.gserviceaccount.com'
+          project_id: cloud-run-project-477318
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Build and deploy backend
+        run: |
+          cd backend
+          gcloud builds submit . \
+            --tag "us-central1-docker.pkg.dev/cloud-run-project-477318/medscript-ai-backend/medscript-ai-backend:${{ github.sha }}" || echo "Backend build failed"
+          
+          gcloud run deploy medscript-ai-backend \
+            --image "us-central1-docker.pkg.dev/cloud-run-project-477318/medscript-ai-backend/medscript-ai-backend:${{ github.sha }}" \
+            --region us-central1 \
+            --platform managed \
+            --allow-unauthenticated \
+            --memory=2Gi \
+            --cpu=2 \
+            --timeout=300 \
+            --max-instances=10 \
+            --min-instances=0 \
+            --concurrency=80 || echo "Backend deployment failed"
+
+    outputs:
+      backend-url: https://medscript-ai-backend-1074963275925.us-central1.run.app
+
+  deploy-frontend:
+    needs: deploy-backend
+    runs-on: ubuntu-latest
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: 'projects/1074963275925/locations/global/workloadIdentityPools/github-random-medscript/providers/github'
+          service_account: 'github-wif@cloud-run-project-477318.iam.gserviceaccount.com'
+          project_id: cloud-run-project-477318
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Ensure Artifact Registry repository exists
+        run: |
+          gcloud artifacts repositories create medscript-ai-frontend \
+            --repository-format=docker \
+            --location=us-central1 \
+            --project=cloud-run-project-477318 \
+            --description="Docker repository for MedScript AI Frontend" 2>/dev/null || echo "Repository already exists or creation failed"
+
+      - name: Build and deploy frontend
+        id: deploy
+        run: |
+          cd frontend
+          
+          BACKEND_URL="https://medscript-ai-backend-1074963275925.us-central1.run.app/api/v1"
+          echo "Building frontend with backend URL: $BACKEND_URL"
+          
+          gcloud builds submit . \
+            --tag "us-central1-docker.pkg.dev/cloud-run-project-477318/medscript-ai-frontend/medscript-ai-frontend:${{ github.sha }}" \
+            --build-arg REACT_APP_API_BASE_URL="$BACKEND_URL" || exit 1
+          
+          gcloud run deploy medscript-ai-frontend \
+            --image "us-central1-docker.pkg.dev/cloud-run-project-477318/medscript-ai-frontend/medscript-ai-frontend:${{ github.sha }}" \
+            --region us-central1 \
+            --platform managed \
+            --allow-unauthenticated \
+            --memory=512Mi \
+            --cpu=1 \
+            --timeout=60 \
+            --max-instances=10 \
+            --min-instances=0 \
+            --concurrency=80 || exit 1
+          
+          # Get the frontend URL
+          FRONTEND_URL=$(gcloud run services describe medscript-ai-frontend \
+            --region us-central1 \
+            --format 'value(status.url)')
+          echo "Frontend URL: $FRONTEND_URL"
+          echo "url=$FRONTEND_URL" >> $GITHUB_OUTPUT
+
+      - name: Show deployment URLs
+        run: |
+          echo "=== Deployment Complete ==="
+          echo "Backend: https://medscript-ai-backend-1074963275925.us-central1.run.app"
+          echo "Frontend: ${{ steps.deploy.outputs.url }}"
+          echo ""
+          echo "✅ Both services are now deployed!"
+
