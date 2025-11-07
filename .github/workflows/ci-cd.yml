@@ -32,17 +32,17 @@ jobs:
           pip install -r backend/requirements-dev.txt
 
       - name: Run tests with pytest
-        run: pytest backend/tests/ || echo "Tests failed but continuing..."
         continue-on-error: true
+        run: pytest backend/tests/ || echo "Tests failed but continuing..."
 
       - name: Lint with black and isort
+        continue-on-error: true
         run: |
           black --check backend/ || echo "Linting failed but continuing..."
           isort --check-only backend/ || echo "Import sorting failed but continuing..."
-        continue-on-error: true
 
   build-and-deploy:
-    if: always() && github.ref == 'refs/heads/main' && needs.test.result != 'cancelled'
+    if: github.ref == 'refs/heads/main'
     needs: test
     runs-on: ubuntu-latest
     permissions:
@@ -126,7 +126,7 @@ jobs:
             --platform=managed
 
       - name: Show Backend Output
-        run: echo "🚀 Backend deployed successfully: ${{ steps.deploy.outputs.url }}"
+        run: echo "Backend deployed successfully: ${{ steps.deploy.outputs.url }}"
 
       - name: Set Backend URL Output
         id: backend-url-output
@@ -142,7 +142,7 @@ jobs:
       backend-url: ${{ steps.backend-url-output.outputs.url || 'https://medscript-ai-backend-1074963275925.us-central1.run.app' }}
 
   deploy-frontend:
-    if: always() && github.ref == 'refs/heads/main' && needs.build-and-deploy.result != 'cancelled'
+    if: github.ref == 'refs/heads/main'
     needs: build-and-deploy
     runs-on: ubuntu-latest
     permissions:
@@ -243,4 +243,4 @@ jobs:
             --platform=managed
 
       - name: Show Frontend Output
-        run: echo "🚀 Frontend deployed successfully: ${{ steps.deploy-frontend.outputs.url }}"
+        run: echo "Frontend deployed successfully: ${{ steps.deploy-frontend.outputs.url }}"
