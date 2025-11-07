@@ -1,4 +1,4 @@
-name: MedScript AI - CI/CD for Backend
+name: MedScript AI - CI/CD for Backend and Frontend
 
 on:
   push:
@@ -123,5 +123,88 @@ jobs:
             --concurrency=80
             --platform=managed
 
-      - name: Show Output
-        run: echo "🚀 Deployed successfully:${{ steps.deploy.outputs.url }}"
+      - name: Show Backend Output
+        run: echo "🚀 Backend deployed successfully: ${{ steps.deploy.outputs.url }}"
+
+    outputs:
+      backend-url: ${{ steps.deploy.outputs.url }}
+
+  deploy-frontend:
+    if: github.ref == 'refs/heads/main'
+    needs: build-and-deploy
+    runs-on: ubuntu-latest
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+
+    env:
+      PROJECT_ID: cloud-run-project-477318
+      GAR_LOCATION: us-central1
+      SERVICE: medscript-ai-frontend
+      REGION: us-central1
+      GCP_PROJECT_NUMBER: "1074963275925"
+      WIF_POOL_ID: "github-random-medscript"
+      WIF_PROVIDER_ID: "github"
+      GCP_SERVICE_ACCOUNT: "github-wif@cloud-run-project-477318.iam.gserviceaccount.com"
+      BACKEND_URL: ${{ needs.build-and-deploy.outputs.backend-url || 'https://medscript-ai-backend-1074963275925.us-central1.run.app' }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: 'projects/1074963275925/locations/global/workloadIdentityPools/github-random-medscript/providers/github'
+          service_account: 'github-wif@cloud-run-project-477318.iam.gserviceaccount.com'
+          project_id: cloud-run-project-477318
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Get Backend URL
+        id: backend
+        run: |
+          BACKEND_URL="${{ env.BACKEND_URL }}/api/v1"
+          echo "Backend API URL: $BACKEND_URL"
+          echo "url=$BACKEND_URL" >> $GITHUB_OUTPUT
+
+      - name: Verify Frontend Dockerfile
+        run: |
+          echo "=== Verifying Frontend Dockerfile ==="
+          if [ ! -f "frontend/Dockerfile" ]; then
+            echo "ERROR: Frontend Dockerfile not found!"
+            exit 1
+          fi
+          if [ ! -f "frontend/nginx.conf.template" ]; then
+            echo "ERROR: nginx.conf.template not found!"
+            exit 1
+          fi
+          echo "Frontend Dockerfile found"
+
+      - name: Build and push frontend container image
+        run: |
+          cd frontend
+          gcloud builds submit . \
+            --tag "us-central1-docker.pkg.dev/cloud-run-project-477318/medscript-ai-frontend/medscript-ai-frontend:${{ github.sha }}" \
+            --build-arg REACT_APP_API_BASE_URL="${{ steps.backend.outputs.url }}"
+
+      - name: Deploy Frontend to Cloud Run
+        id: deploy-frontend
+        uses: google-github-actions/deploy-cloudrun@v2
+        with:
+          service: medscript-ai-frontend
+          region: us-central1
+          image: "us-central1-docker.pkg.dev/cloud-run-project-477318/medscript-ai-frontend/medscript-ai-frontend:${{ github.sha }}"
+          flags: |
+            --allow-unauthenticated
+            --memory=512Mi
+            --cpu=1
+            --timeout=60
+            --max-instances=10
+            --min-instances=0
+            --concurrency=80
+            --platform=managed
+
+      - name: Show Frontend Output
+        run: echo "🚀 Frontend deployed successfully: ${{ steps.deploy-frontend.outputs.url }}"
