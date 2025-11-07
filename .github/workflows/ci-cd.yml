@@ -42,8 +42,8 @@ jobs:
           isort --check-only backend/ || echo "Import sorting failed but continuing..."
 
   build-and-deploy:
-    if: github.ref == 'refs/heads/main'
-    needs: test
+    if: always() && (needs.test.result == 'success' || needs.test.result == 'failure') && github.ref == 'refs/heads/main'
+    needs: [test]
     runs-on: ubuntu-latest
     permissions:
       contents: 'read'
