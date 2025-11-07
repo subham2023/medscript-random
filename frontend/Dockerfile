@@ -23,9 +23,11 @@ RUN npm run build
 # Stage 2: Serve with nginx
 FROM nginx:alpine
 
+# Install gettext for envsubst
+RUN apk add --no-cache gettext
+
 # Copy custom nginx configuration template
-# nginx:alpine automatically processes .template files in /etc/nginx/templates/
-COPY nginx.conf.template /etc/nginx/templates/default.conf.template
+COPY nginx.conf.template /tmp/nginx.conf.template
 
 # Copy built app from build stage
 COPY --from=build /app/build /usr/share/nginx/html
@@ -36,6 +38,14 @@ EXPOSE 8080
 # Set default PORT for Cloud Run (Cloud Run will override this)
 ENV PORT=8080
 
-# nginx:alpine automatically processes template files and starts nginx
-# The PORT environment variable will be substituted in the template
+# Create startup script to substitute PORT variable and start nginx
+RUN echo '#!/bin/sh' > /start-nginx.sh && \
+    echo 'set -e' >> /start-nginx.sh && \
+    echo 'PORT=${PORT:-8080}' >> /start-nginx.sh && \
+    echo 'envsubst '"'"'$PORT'"'"' < /tmp/nginx.conf.template > /etc/nginx/conf.d/default.conf' >> /start-nginx.sh && \
+    echo 'exec nginx -g "daemon off;"' >> /start-nginx.sh && \
+    chmod +x /start-nginx.sh
+
+# Use custom startup script
+CMD ["/start-nginx.sh"]
 
