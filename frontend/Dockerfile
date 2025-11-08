@@ -31,7 +31,7 @@ RUN apk add --no-cache gettext
 # Copy nginx configuration template
 COPY nginx.conf.template /tmp/nginx.conf.template
 
-# Copy startup script
+# Copy startup script and make it executable
 COPY start-nginx.sh /start-nginx.sh
 RUN chmod +x /start-nginx.sh
 
@@ -43,6 +43,9 @@ EXPOSE 8080
 
 # Set default PORT environment variable (Cloud Run overrides it)
 ENV PORT=8080
+
+# Make sure permissions are correct even if repo didn’t track exec bit
+RUN chmod 755 /start-nginx.sh
 
 # Start Nginx using our startup script
 CMD ["/start-nginx.sh"]
