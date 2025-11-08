@@ -52,7 +52,6 @@ jobs:
           echo "🚀 Building backend Docker image..."
           gcloud builds submit . \
             --tag "$IMAGE_NAME:$IMAGE_TAG" \
-            --no-stream-logs \
             --project=$PROJECT_ID || exit 1
 
           echo "🚀 Deploying backend to Cloud Run..."
@@ -127,7 +126,6 @@ jobs:
           gcloud builds submit . \
             --config cloudbuild.yaml \
             --substitutions _REACT_APP_API_BASE_URL="$BACKEND_URL",_IMAGE_NAME="$IMAGE_NAME",_IMAGE_TAG="$IMAGE_TAG" \
-            --no-stream-logs \
             --project=$PROJECT_ID || exit 1
 
           echo "🚀 Deploying frontend to Cloud Run..."
