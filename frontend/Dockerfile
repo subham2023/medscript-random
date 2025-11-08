@@ -29,6 +29,10 @@ RUN apk add --no-cache gettext
 # Copy custom nginx configuration template
 COPY nginx.conf.template /tmp/nginx.conf.template
 
+# Copy startup script
+COPY start-nginx.sh /start-nginx.sh
+RUN chmod +x /start-nginx.sh
+
 # Copy built app from build stage
 COPY --from=build /app/build /usr/share/nginx/html
 
@@ -37,14 +41,6 @@ EXPOSE 8080
 
 # Set default PORT for Cloud Run (Cloud Run will override this)
 ENV PORT=8080
-
-# Create startup script to substitute PORT variable and start nginx
-RUN echo '#!/bin/sh' > /start-nginx.sh && \
-    echo 'set -e' >> /start-nginx.sh && \
-    echo 'PORT=${PORT:-8080}' >> /start-nginx.sh && \
-    echo 'envsubst '"'"'$PORT'"'"' < /tmp/nginx.conf.template > /etc/nginx/conf.d/default.conf' >> /start-nginx.sh && \
-    echo 'exec nginx -g "daemon off;"' >> /start-nginx.sh && \
-    chmod +x /start-nginx.sh
 
 # Use custom startup script
 CMD ["/start-nginx.sh"]
