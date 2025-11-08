@@ -223,9 +223,13 @@ jobs:
       - name: Build and push frontend container image
         run: |
           cd frontend
+          IMAGE_NAME="us-central1-docker.pkg.dev/cloud-run-project-477318/medscript-ai-frontend/medscript-ai-frontend"
+          IMAGE_TAG="${{ github.sha }}"
+          BACKEND_URL="${{ steps.backend.outputs.url }}"
+          echo "Building frontend with backend URL: $BACKEND_URL"
           gcloud builds submit . \
-            --tag "us-central1-docker.pkg.dev/cloud-run-project-477318/medscript-ai-frontend/medscript-ai-frontend:${{ github.sha }}" \
-            --build-arg REACT_APP_API_BASE_URL="${{ steps.backend.outputs.url }}"
+            --config cloudbuild.yaml \
+            --substitutions _REACT_APP_API_BASE_URL="$BACKEND_URL",_IMAGE_NAME="$IMAGE_NAME",_IMAGE_TAG="$IMAGE_TAG"
 
       - name: Deploy Frontend to Cloud Run
         id: deploy-frontend

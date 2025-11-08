@@ -93,12 +93,15 @@ jobs:
           BACKEND_URL="https://medscript-ai-backend-1074963275925.us-central1.run.app/api/v1"
           echo "Building frontend with backend URL: $BACKEND_URL"
           
+          IMAGE_NAME="us-central1-docker.pkg.dev/cloud-run-project-477318/medscript-ai-frontend/medscript-ai-frontend"
+          IMAGE_TAG="${{ github.sha }}"
+          
           gcloud builds submit . \
-            --tag "us-central1-docker.pkg.dev/cloud-run-project-477318/medscript-ai-frontend/medscript-ai-frontend:${{ github.sha }}" \
-            --build-arg REACT_APP_API_BASE_URL="$BACKEND_URL" || exit 1
+            --config cloudbuild.yaml \
+            --substitutions _REACT_APP_API_BASE_URL="$BACKEND_URL",_IMAGE_NAME="$IMAGE_NAME",_IMAGE_TAG="$IMAGE_TAG" || exit 1
           
           gcloud run deploy medscript-ai-frontend \
-            --image "us-central1-docker.pkg.dev/cloud-run-project-477318/medscript-ai-frontend/medscript-ai-frontend:${{ github.sha }}" \
+            --image "$IMAGE_NAME:$IMAGE_TAG" \
             --region us-central1 \
             --platform managed \
             --allow-unauthenticated \
