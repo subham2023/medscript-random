@@ -18,7 +18,10 @@ ARG REACT_APP_API_BASE_URL=https://medscript-ai-backend-1074963275925.us-central
 ENV REACT_APP_API_BASE_URL=$REACT_APP_API_BASE_URL
 
 # Build the React app
-RUN npm run build
+RUN npm run build || (echo "Build failed!" && exit 1)
+
+# Verify build output exists
+RUN test -d build || (echo "Build directory not found!" && exit 1)
 
 # Stage 2: Serve with nginx
 FROM nginx:alpine
@@ -31,10 +34,14 @@ COPY nginx.conf.template /tmp/nginx.conf.template
 
 # Copy startup script
 COPY start-nginx.sh /start-nginx.sh
-RUN chmod +x /start-nginx.sh
+RUN chmod +x /start-nginx.sh && \
+    test -f /start-nginx.sh || (echo "Startup script not found!" && exit 1)
 
 # Copy built app from build stage
 COPY --from=build /app/build /usr/share/nginx/html
+
+# Verify files were copied
+RUN test -f /usr/share/nginx/html/index.html || (echo "index.html not found!" && exit 1)
 
 # Expose port 8080 (Cloud Run default)
 EXPOSE 8080
