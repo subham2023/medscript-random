@@ -70,6 +70,7 @@ jobs:
             --allow-unauthenticated \
             --memory=2Gi \
             --cpu=2 \
+            --set-env-vars="DOCUMENT_UPLOAD_BUCKET=medscript-uploads" \
             --timeout=300 \
             --max-instances=10 \
             --min-instances=0 \
