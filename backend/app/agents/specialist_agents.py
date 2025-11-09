@@ -3,14 +3,16 @@ from typing import Any, Dict, List
 
 from langchain_core.prompts import PromptTemplate
 from langchain_google_genai import ChatGoogleGenerativeAI
+from langchain_google_vertexai import ChatVertexAI
 
 # As per spec, use Gemini 2.0 Flash model. The model name might be e.g., "gemini-1.5-flash-latest"
-MODEL_NAME = "gemini-1.5-flash-latest"
-
+MODEL_NAME = "gemini-2.5-flash"
+PROJECT_ID = "cloud-run-project-477318"
 
 class DocumentTypeDetectionAgent:
     def __init__(self):
-        self.llm = ChatGoogleGenerativeAI(model=MODEL_NAME, temperature=0.1)
+        # self.llm = ChatGoogleGenerativeAI(model=MODEL_NAME, temperature=0.1,)
+        self.llm = ChatVertexAI(model=MODEL_NAME,temperature=0.1,project=PROJECT_ID)
         self.document_types = [
             "prescription",
             "lab results",
