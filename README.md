@@ -1,4 +1,3 @@
-
 ***
 
 # MedScript AI
