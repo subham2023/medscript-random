@@ -10,6 +10,7 @@ google-cloud-aiplatform>=1.70.0
 google-cloud-firestore>=2.21.0
 google-cloud-storage>=2.18.0
 google-cloud-vision>=3.7.0
+langchain-google-vertexai
 spacy>=3.7.0
 medspacy>=1.0.0
 scikit-learn>=1.5.0
