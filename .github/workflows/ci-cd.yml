@@ -105,10 +105,17 @@ jobs:
           head -10 backend/Dockerfile
 
       - name: Build and push container image
+        timeout-minutes: 45
         run: |
           cd backend
+          echo "🚀 Building backend Docker image..."
+          echo "This may take 10-20 minutes due to large ML dependencies..."
+          
           gcloud builds submit . \
-            --tag "us-central1-docker.pkg.dev/cloud-run-project-477318/medscript-ai-backend/medscript-ai-backend:${{ github.sha }}"
+            --tag "us-central1-docker.pkg.dev/cloud-run-project-477318/medscript-ai-backend/medscript-ai-backend:${{ github.sha }}" \
+            --timeout=40m
+          
+          echo "✅ Build completed successfully!"
 
       - name: Deploy to Cloud Run
         id: deploy

@@ -44,15 +44,23 @@ jobs:
             --description="Docker repository for MedScript AI Backend" 2>/dev/null || echo "Repository already exists"
 
       - name: Build and deploy backend
+        timeout-minutes: 45
         run: |
           cd backend
           IMAGE_NAME="us-central1-docker.pkg.dev/cloud-run-project-477318/medscript-ai-backend/medscript-ai-backend"
           IMAGE_TAG="${{ github.sha }}"
           
           echo "🚀 Building backend Docker image..."
+          echo "This may take 10-20 minutes due to large ML dependencies..."
+          
+          # Build with timeout and optimized settings
           gcloud builds submit . \
             --tag "$IMAGE_NAME:$IMAGE_TAG" \
-            --project=$PROJECT_ID || exit 1
+            --project=$PROJECT_ID \
+            --timeout=40m \
+            || (echo "Build failed, checking logs..." && exit 1)
+          
+          echo "✅ Build completed successfully!"
 
           echo "🚀 Deploying backend to Cloud Run..."
           gcloud run deploy medscript-ai-backend \
