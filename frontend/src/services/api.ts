@@ -1,6 +1,10 @@
 import axios from 'axios';
 
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000/api/v1';
+// Use production backend URL as default, fallback to localhost only in development
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 
+  (process.env.NODE_ENV === 'production' 
+    ? 'https://medscript-ai-backend-1074963275925.us-central1.run.app/api/v1'
+    : 'http://localhost:8000/api/v1');
 
 interface MedicalEntity {
   entity_type: string;
