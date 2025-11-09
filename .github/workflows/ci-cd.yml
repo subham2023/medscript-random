@@ -124,6 +124,8 @@ jobs:
           service: medscript-ai-backend
           region: us-central1
           image: "us-central1-docker.pkg.dev/cloud-run-project-477318/medscript-ai-backend/medscript-ai-backend:${{ github.sha }}"
+          env_vars: |
+            DOCUMENT_UPLOAD_BUCKET=medscript-uploads
           flags: |
             --allow-unauthenticated
             --memory=2Gi
