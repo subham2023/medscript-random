@@ -4,6 +4,7 @@ import structlog
 from app.api.endpoints import analysis, documents
 from app.core.config import settings
 from fastapi import FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
 from prometheus_client import Counter, Histogram, generate_latest
 from starlette.responses import Response
 
@@ -12,6 +13,21 @@ logger = structlog.get_logger()
 
 app = FastAPI(
     title=settings.PROJECT_NAME, openapi_url=f"{settings.API_V1_STR}/openapi.json"
+)
+
+# Configure CORS to allow requests from Vercel and other frontend hosts
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:3000",  # Local development
+        "http://localhost:8080",  # Local Docker
+        # Add your production Vercel domain here after deployment
+        # "https://your-app.vercel.app",
+    ],
+    allow_origin_regex=r"https://.*\.vercel\.app",  # Vercel preview deployments
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # Prometheus Metrics
