@@ -6,7 +6,7 @@ class Settings(BaseSettings):
     API_V1_STR: str = "/api/v1"
 
     # Google Cloud Settings
-    GOOGLE_CLOUD_PROJECT: str = "your-gcp-project-id"
+    GOOGLE_CLOUD_PROJECT: str = "cloud-run-project-477318"
 
     # Firestore Settings
     FIRESTORE_DATABASE: str = "medscript-db"
