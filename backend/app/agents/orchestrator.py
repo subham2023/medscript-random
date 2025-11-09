@@ -7,14 +7,15 @@ from app.agents.specialist_agents import (
     ReasoningAgent,
     SafetyAssessmentAgent,
 )
-from langchain_google_genai import ChatGoogleGenerativeAI
-
+from langchain_google_genai import ChatVertexAI
+from langchain_google_vertexai import ChatVertexAI
 
 class OrchestratorAgent:
     def __init__(self):
         # Spec mentions Gemini 2.0 Flash, which would be a specific model name like "gemini-1.5-flash-latest"
         # Using a placeholder here that aligns with the spec's intent.
-        self.llm = ChatGoogleGenerativeAI(model="gemini-1.5-flash-latest")
+        # self.llm = ChatVertexAI(model="gemini-1.5-flash-latest")
+        self.llm = ChatVertexAI(model="gemini-2.5-flash",temperature=0.1,project="loud-run-project-477318")
         self.document_type_agent = DocumentTypeDetectionAgent()
         self.medical_entity_agent = MedicalEntityExtractionAgent()
         self.knowledge_retrieval_agent = KnowledgeRetrievalAgent()
