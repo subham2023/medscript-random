@@ -2,7 +2,7 @@ import json
 from typing import Any, Dict, List
 
 from langchain_core.prompts import PromptTemplate
-from langchain_google_genai import ChatGoogleGenerativeAI
+# from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_google_vertexai import ChatVertexAI
 
 # As per spec, use Gemini 2.0 Flash model. The model name might be e.g., "gemini-1.5-flash-latest"
@@ -60,8 +60,8 @@ class DocumentTypeDetectionAgent:
 
 class MedicalEntityExtractionAgent:
     def __init__(self):
-        self.llm = ChatGoogleGenerativeAI(
-            model=MODEL_NAME, temperature=0.2, response_format={"type": "json_object"}
+        self.llm = ChatVertexAI(
+            model=MODEL_NAME, temperature=0.2,project=PROJECT_ID, response_format={"type": "json_object"}
         )
         self.prompt_template = PromptTemplate.from_template(
             """You are an AI assistant specialized in extracting medical entities.
@@ -139,8 +139,8 @@ class KnowledgeRetrievalAgent:
 
 class ReasoningAgent:
     def __init__(self):
-        self.llm = ChatGoogleGenerativeAI(
-            model=MODEL_NAME, temperature=0.5, response_format={"type": "json_object"}
+        self.llm = ChatVertexAI(
+            model=MODEL_NAME, temperature=0.5,project=PROJECT_ID, response_format={"type": "json_object"}
         )
         self.prompt_template = PromptTemplate.from_template(
             """You are an expert medical reasoning AI.
@@ -183,7 +183,7 @@ class ReasoningAgent:
 class SafetyAssessmentAgent:
     def __init__(self):
         # This agent can use a simpler model or even rule-based logic for some checks.
-        self.llm = ChatGoogleGenerativeAI(model=MODEL_NAME, temperature=0.3)
+        self.llm = ChatVertexAI(model=MODEL_NAME, temperature=0.3,project=PROJECT_ID)
         # In a real system, this would be a comprehensive, regularly updated database.
         self.interaction_db = {
             ("metformin", "insulin"): "major",
