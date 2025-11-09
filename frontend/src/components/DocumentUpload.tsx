@@ -2,7 +2,7 @@ import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { uploadDocument, getAnalysisStatus, getAnalysisResult, AnalysisResult } from '../services/api';
 import { 
   Box, Typography, Button, CircularProgress, 
-  Paper, List, ListItem, ListItemText, Divider,
+  Paper, List, ListItem, ListItemText,
   Alert, Chip, TextField, IconButton, Stack
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
@@ -67,8 +67,6 @@ interface Message {
 const DocumentUpload: React.FC = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
-  const [error, setError] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([
     {
       id: '1',
@@ -93,8 +91,6 @@ const DocumentUpload: React.FC = () => {
     if (event.target.files && event.target.files[0]) {
       const file = event.target.files[0];
       setSelectedFile(file);
-      setAnalysisResult(null);
-      setError(null);
       
       // Add a message showing the selected file
       setMessages(prev => [...prev, {
@@ -122,7 +118,6 @@ const DocumentUpload: React.FC = () => {
           clearInterval(pollingIntervalRef.current);
         }
         const result = await getAnalysisResult(documentId);
-        setAnalysisResult(result);
         setMessages(prev => {
           const filtered = prev.filter(msg => msg.id !== thinkingMsgId);
           return [...filtered, {
@@ -138,7 +133,6 @@ const DocumentUpload: React.FC = () => {
           clearInterval(pollingIntervalRef.current);
         }
         const errorMsg = statusResult.message || 'Analysis failed.';
-        setError(errorMsg);
         setMessages(prev => {
           const filtered = prev.filter(msg => msg.id !== thinkingMsgId);
           return [...filtered, {
@@ -165,7 +159,6 @@ const DocumentUpload: React.FC = () => {
 
   const handleFileUpload = useCallback(async () => {
     if (!selectedFile) {
-      setError('Please select a file first.');
       return;
     }
 
@@ -182,7 +175,6 @@ const DocumentUpload: React.FC = () => {
     setTimeout(scrollToBottom, 100);
     
     setIsLoading(true);
-    setError(null);
     
     const thinkingMsgId = Date.now().toString();
     setMessages(prev => [...prev, {
@@ -207,7 +199,6 @@ const DocumentUpload: React.FC = () => {
 
     } catch (err: any) {
       const errorMsg = err.response?.data?.detail || 'An error occurred during upload.';
-      setError(errorMsg);
       
       setMessages(prev => {
         const filtered = prev.filter(msg => msg.id !== thinkingMsgId);
