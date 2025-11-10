@@ -1,4 +1,5 @@
 from typing import Any, Dict
+from google.auth import default
 
 from app.agents.specialist_agents import (
     DocumentTypeDetectionAgent,
