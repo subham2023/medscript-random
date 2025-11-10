@@ -8,7 +8,6 @@ from app.agents.specialist_agents import (
     ReasoningAgent,
     SafetyAssessmentAgent,
 )
-from langchain_google_genai import ChatVertexAI
 from langchain_google_vertexai import ChatVertexAI
 
 class OrchestratorAgent:
