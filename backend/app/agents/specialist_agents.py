@@ -4,6 +4,7 @@ from typing import Any, Dict, List
 from langchain_core.prompts import PromptTemplate
 # from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_google_vertexai import ChatVertexAI
+from google.auth import default
 
 # As per spec, use Gemini 2.0 Flash model. The model name might be e.g., "gemini-1.5-flash-latest"
 MODEL_NAME = "gemini-2.5-flash"
