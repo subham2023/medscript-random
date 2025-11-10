@@ -9,13 +9,15 @@ from app.agents.specialist_agents import (
     SafetyAssessmentAgent,
 )
 from langchain_google_vertexai import ChatVertexAI
+MODEL_NAME="gemini-1.5-flash-001"
+PROJECT_ID="loud-run-project-477318"
 
 class OrchestratorAgent:
     def __init__(self):
         # Spec mentions Gemini 2.0 Flash, which would be a specific model name like "gemini-1.5-flash-latest"
         # Using a placeholder here that aligns with the spec's intent.
         # self.llm = ChatVertexAI(model="gemini-1.5-flash-latest")
-        self.llm = ChatVertexAI(model="gemini-2.5-flash",temperature=0.1,project="loud-run-project-477318")
+        self.llm = ChatVertexAI(model=MODEL_NAME,temperature=0.1,project=PROJECT_ID)
         self.document_type_agent = DocumentTypeDetectionAgent()
         self.medical_entity_agent = MedicalEntityExtractionAgent()
         self.knowledge_retrieval_agent = KnowledgeRetrievalAgent()
