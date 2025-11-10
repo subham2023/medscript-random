@@ -7,7 +7,7 @@ from langchain_google_vertexai import ChatVertexAI
 from google.auth import default
 
 # As per spec, use Gemini 2.0 Flash model. The model name might be e.g., "gemini-1.5-flash-latest"
-MODEL_NAME = "gemini-2.5-flash"
+MODEL_NAME = "gemini-1.5-flash-001"
 PROJECT_ID = "cloud-run-project-477318"
 
 class DocumentTypeDetectionAgent:
