@@ -1,4 +1,4 @@
-name: MedScript AI - CI/CD for Backend and Frontend
+name: MedScript AI - CI/CD for Backend ONLY
 
 on:
   push:
@@ -17,7 +17,7 @@ env:
 jobs:
   test:
     runs-on: ubuntu-latest
-    continue-on-error: true
+    continue-on-error: true # This allows deployment even if tests fail. Set to 'false' for stricter quality control.
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -44,6 +44,7 @@ jobs:
           isort --check-only backend/ || echo "Import sorting failed but continuing..."
 
   build-and-deploy:
+    # This job now runs on every push to main, after the 'test' job completes.
     if: always() && github.ref == 'refs/heads/main'
     needs: [test]
     runs-on: ubuntu-latest
@@ -65,18 +66,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Verify Configuration
-        run: |
-          echo "=== Checking Config ==="
-          echo "PROJECT_ID: $PROJECT_ID"
-          echo "PROJECT_NUMBER: $GCP_PROJECT_NUMBER"
-          echo "WIF_POOL_ID: $WIF_POOL_ID"
-          echo "WIF_PROVIDER_ID: $WIF_PROVIDER_ID"
-          echo "SERVICE_ACCOUNT: $GCP_SERVICE_ACCOUNT"
-          echo ""
-          echo "=== Workload Identity Provider Path ==="
-          echo "projects/$GCP_PROJECT_NUMBER/locations/global/workloadIdentityPools/$WIF_POOL_ID/providers/$WIF_PROVIDER_ID"
-
       - name: Authenticate to Google Cloud
         id: auth
         uses: google-github-actions/auth@v2
@@ -88,33 +77,14 @@ jobs:
       - name: Set up Cloud SDK
         uses: google-github-actions/setup-gcloud@v2
 
-      - name: Verify Dockerfile exists and is not empty
-        run: |
-          echo "=== Verifying Dockerfile ==="
-          if [ ! -f "backend/Dockerfile" ]; then
-            echo "ERROR: Dockerfile not found!"
-            exit 1
-          fi
-          if [ ! -s "backend/Dockerfile" ]; then
-            echo "ERROR: Dockerfile is empty!"
-            exit 1
-          fi
-          echo "Dockerfile found and has content:"
-          ls -lh backend/Dockerfile
-          echo "First 10 lines of Dockerfile:"
-          head -10 backend/Dockerfile
-
       - name: Build and push container image
         timeout-minutes: 45
         run: |
           cd backend
           echo "🚀 Building backend Docker image..."
-          echo "This may take 10-20 minutes due to large ML dependencies..."
-          
           gcloud builds submit . \
             --tag "us-central1-docker.pkg.dev/cloud-run-project-477318/medscript-ai-backend/medscript-ai-backend:${{ github.sha }}" \
             --timeout=40m
-          
           echo "✅ Build completed successfully!"
 
       - name: Deploy to Cloud Run
@@ -137,125 +107,6 @@ jobs:
             --platform=managed
 
       - name: Show Backend Output
-        run: echo "Backend deployed successfully: ${{ steps.deploy.outputs.url }}"
+        run: echo "✅ Backend deployed successfully:${{ steps.deploy.outputs.url }}"
 
-      - name: Set Backend URL Output
-        id: backend-url-output
-        run: |
-          BACKEND_URL="${{ steps.deploy.outputs.url }}"
-          if [ -z "$BACKEND_URL" ]; then
-            BACKEND_URL="https://medscript-ai-backend-1074963275925.us-central1.run.app"
-            echo "Using fallback backend URL: $BACKEND_URL"
-          fi
-          echo "url=$BACKEND_URL" >> $GITHUB_OUTPUT
-
-    outputs:
-      backend-url: ${{ steps.backend-url-output.outputs.url || 'https://medscript-ai-backend-1074963275925.us-central1.run.app' }}
-
-  deploy-frontend:
-    if: always() && github.ref == 'refs/heads/main' && needs.build-and-deploy.result != 'cancelled'
-    needs: build-and-deploy
-    runs-on: ubuntu-latest
-    permissions:
-      contents: 'read'
-      id-token: 'write'
-
-    env:
-      PROJECT_ID: cloud-run-project-477318
-      GAR_LOCATION: us-central1
-      SERVICE: medscript-ai-frontend
-      REGION: us-central1
-      GCP_PROJECT_NUMBER: "1074963275925"
-      WIF_POOL_ID: "github-random-medscript"
-      WIF_PROVIDER_ID: "github"
-      GCP_SERVICE_ACCOUNT: "github-wif@cloud-run-project-477318.iam.gserviceaccount.com"
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Authenticate to Google Cloud
-        uses: google-github-actions/auth@v2
-        with:
-          workload_identity_provider: 'projects/1074963275925/locations/global/workloadIdentityPools/github-random-medscript/providers/github'
-          service_account: 'github-wif@cloud-run-project-477318.iam.gserviceaccount.com'
-          project_id: cloud-run-project-477318
-
-      - name: Set up Cloud SDK
-        uses: google-github-actions/setup-gcloud@v2
-
-      - name: Ensure Artifact Registry repository exists
-        run: |
-          # Check if repository exists, create if it doesn't
-          if ! gcloud artifacts repositories describe medscript-ai-frontend \
-            --location=us-central1 \
-            --project=cloud-run-project-477318 2>/dev/null; then
-            echo "Creating Artifact Registry repository..."
-            gcloud artifacts repositories create medscript-ai-frontend \
-              --repository-format=docker \
-              --location=us-central1 \
-              --project=cloud-run-project-477318 \
-              --description="Docker repository for MedScript AI Frontend" || echo "Repository may already exist"
-          else
-            echo "Repository already exists"
-          fi
-
-      - name: Get Backend URL
-        id: backend
-        run: |
-          # Try to get backend URL from previous job, otherwise use fallback
-          BACKEND_URL="${{ needs.build-and-deploy.outputs.backend-url }}"
-          if [ -z "$BACKEND_URL" ] || [ "$BACKEND_URL" == "null" ]; then
-            BACKEND_URL="https://medscript-ai-backend-1074963275925.us-central1.run.app"
-            echo "Using fallback backend URL"
-          fi
-          # Ensure we have /api/v1 suffix
-          if [[ ! "$BACKEND_URL" == *"/api/v1" ]]; then
-            BACKEND_URL="${BACKEND_URL}/api/v1"
-          fi
-          echo "Backend API URL: $BACKEND_URL"
-          echo "url=$BACKEND_URL" >> $GITHUB_OUTPUT
-
-      - name: Verify Frontend Dockerfile
-        run: |
-          echo "=== Verifying Frontend Dockerfile ==="
-          if [ ! -f "frontend/Dockerfile" ]; then
-            echo "ERROR: Frontend Dockerfile not found!"
-            exit 1
-          fi
-          if [ ! -f "frontend/nginx.conf.template" ]; then
-            echo "ERROR: nginx.conf.template not found!"
-            exit 1
-          fi
-          echo "Frontend Dockerfile found"
-
-      - name: Build and push frontend container image
-        run: |
-          cd frontend
-          IMAGE_NAME="us-central1-docker.pkg.dev/cloud-run-project-477318/medscript-ai-frontend/medscript-ai-frontend"
-          IMAGE_TAG="${{ github.sha }}"
-          BACKEND_URL="${{ steps.backend.outputs.url }}"
-          echo "Building frontend with backend URL: $BACKEND_URL"
-          gcloud builds submit . \
-            --config cloudbuild.yaml \
-            --substitutions _REACT_APP_API_BASE_URL="$BACKEND_URL",_IMAGE_NAME="$IMAGE_NAME",_IMAGE_TAG="$IMAGE_TAG"
-
-      - name: Deploy Frontend to Cloud Run
-        id: deploy-frontend
-        uses: google-github-actions/deploy-cloudrun@v2
-        with:
-          service: medscript-ai-frontend
-          region: us-central1
-          image: "us-central1-docker.pkg.dev/cloud-run-project-477318/medscript-ai-frontend/medscript-ai-frontend:${{ github.sha }}"
-          flags: |
-            --allow-unauthenticated
-            --memory=512Mi
-            --cpu=1
-            --timeout=60
-            --max-instances=10
-            --min-instances=0
-            --concurrency=80
-            --platform=managed
-
-      - name: Show Frontend Output
-        run: echo "Frontend deployed successfully: ${{ steps.deploy-frontend.outputs.url }}"
+# --- THE FRONTEND DEPLOYMENT JOB HAS BEEN COMPLETELY REMOVED ---
